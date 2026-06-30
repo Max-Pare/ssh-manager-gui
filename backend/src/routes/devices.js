@@ -171,7 +171,7 @@ router.put('/:id', (req, res) => {
 
   const ALLOWED = ['name', 'hostname', 'ip', 'port', 'user', 'authType', 'keyPath',
                    'password', 'env', 'group', 'tags', 'os', 'cpu', 'ram', 'uptime',
-                   'status', 'lastSeen'];
+                   'status', 'lastSeen', 'hostKey'];
 
   const cols = {};
   for (const field of ALLOWED) {

@@ -10,6 +10,15 @@ if (!process.env.ENCRYPTION_KEY) {
   process.exit(1);
 }
 
+if (!process.env.API_TOKEN) {
+  console.error('');
+  console.error('  ERROR: API_TOKEN is not set.');
+  console.error('  Set API_TOKEN in .env to a random 32+ character string. Clients must send it as');
+  console.error('  "Authorization: Bearer <token>" (REST) or "?token=<token>" (terminal WebSocket).');
+  console.error('');
+  process.exit(1);
+}
+
 const http = require('http');
 const express = require('express');
 const WebSocket = require('ws');
@@ -17,6 +26,7 @@ const WebSocket = require('ws');
 const devicesRouter = require('./routes/devices');
 const settingsRouter = require('./routes/settings');
 const { handleTerminal } = require('./ws/terminal');
+const { requireAuth, checkWsAuth } = require('./auth');
 const poller = require('./poller');
 
 const PORT = process.env.PORT || 3001;
@@ -42,9 +52,9 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, version: '1.0.0' });
 });
 
-// Routes
-app.use('/api/devices', devicesRouter);
-app.use('/api/settings', settingsRouter);
+// Routes (all require a valid API token)
+app.use('/api/devices', requireAuth, devicesRouter);
+app.use('/api/settings', requireAuth, settingsRouter);
 
 // 404
 app.use((req, res) => {
@@ -63,8 +73,18 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ noServer: true });
 
 server.on('upgrade', (req, socket, head) => {
-  const match = req.url.match(/^\/ws\/terminal\/(\d+)$/);
+  // Match path only; query string (e.g. ?token=) is parsed separately.
+  const pathname = req.url.split('?')[0];
+  const match = pathname.match(/^\/ws\/terminal\/(\d+)$/);
   if (!match) { socket.destroy(); return; }
+
+  // Origin allowlist + token check (CSWSH + auth defense).
+  if (!checkWsAuth(req, ALLOWED_ORIGIN)) {
+    socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+    socket.destroy();
+    return;
+  }
+
   wss.handleUpgrade(req, socket, head, (ws) => {
     handleTerminal(ws, parseInt(match[1], 10));
   });

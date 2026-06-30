@@ -51,6 +51,10 @@ const MIGRATIONS = [
     value TEXT NOT NULL
   );
   `,
+  // v2: trusted SSH host-key fingerprint (sha256 hex) for host-key verification
+  `
+  ALTER TABLE devices ADD COLUMN hostKey TEXT;
+  `,
 ];
 
 for (let i = currentVersion; i < MIGRATIONS.length; i++) {

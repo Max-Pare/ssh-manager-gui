@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { api, WS_URL } from '@/app/_lib/api';
+import { api, terminalWsUrl } from '@/app/_lib/api';
 import { Device, EnvironmentId, Settings } from '@/app/_lib/ssh-manager-data';
 import { TerminalStatus } from './Terminal';
 import { Header } from './Header';
@@ -92,7 +92,7 @@ export function SshManagerApp() {
   // ── Terminal sessions ──────────────────────────────────────────────────────
   const openTerminal = (device: Device) => {
     const sessionId = `${device.id}-${Date.now()}`;
-    const ws = new WebSocket(`${WS_URL}/ws/terminal/${device.id}`);
+    const ws = new WebSocket(terminalWsUrl(device.id));
 
     setSessions((prev) => [
       ...prev,

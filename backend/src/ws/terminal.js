@@ -7,6 +7,7 @@ const { Client } = require('ssh2');
 const WebSocket = require('ws');
 const db = require('../db');
 const { decrypt } = require('../crypto');
+const { makeHostVerifier } = require('../hostkey');
 
 function handleTerminal(ws, deviceId) {
   const row = db.prepare('SELECT * FROM devices WHERE id = ?').get(deviceId);
@@ -41,12 +42,18 @@ function handleTerminal(ws, deviceId) {
     throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
   }
 
+  // Honor strictHostKeyChecking setting (string 'true'/'false' in DB).
+  const strictRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('strictHostKeyChecking');
+  const strict = strictRow ? strictRow.value === 'true' : false;
+
   // Build SSH connection config
   const sshCfg = {
     host: row.ip || row.hostname,  // prefer IP; hostname may not resolve
     port: row.port || 22,
     username: row.user,
     readyTimeout: 30000,
+    hostHash: 'sha256',
+    hostVerifier: makeHostVerifier(row.id, strict),
   };
 
   if (row.authType === 'key') {

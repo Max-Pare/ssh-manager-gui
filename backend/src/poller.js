@@ -6,6 +6,7 @@ const os = require('os');
 const { Client } = require('ssh2');
 const db = require('./db');
 const { decrypt } = require('./crypto');
+const { makeHostVerifier } = require('./hostkey');
 
 const METRICS_CMD = [
   'echo "---CPU---"',
@@ -49,12 +50,16 @@ function parseMetrics(output) {
 }
 
 function getSettings() {
-  const rows = db.prepare('SELECT key, value FROM settings WHERE key IN (?, ?)').all(
+  const rows = db.prepare('SELECT key, value FROM settings WHERE key IN (?, ?, ?)').all(
     'connectionTimeoutSecs',
-    'pollIntervalSecs'
+    'pollIntervalSecs',
+    'strictHostKeyChecking'
   );
-  const result = { connectionTimeoutSecs: 30, pollIntervalSecs: 30 };
-  for (const row of rows) result[row.key] = Number(row.value);
+  const result = { connectionTimeoutSecs: 30, pollIntervalSecs: 30, strictHostKeyChecking: false };
+  for (const row of rows) {
+    if (row.key === 'strictHostKeyChecking') result[row.key] = row.value === 'true';
+    else result[row.key] = Number(row.value);
+  }
   return result;
 }
 
@@ -72,12 +77,14 @@ function resolveKeyPath(keyPath) {
   throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
 }
 
-function buildSSHConfig(device, timeoutSecs) {
+function buildSSHConfig(device, timeoutSecs, strict) {
   const cfg = {
     host: device.ip || device.hostname,  // prefer IP; hostname may not resolve
     port: device.port || 22,
     username: device.user,
     readyTimeout: timeoutSecs * 1000,
+    hostHash: 'sha256',
+    hostVerifier: makeHostVerifier(device.id, strict),
   };
 
   if (device.authType === 'key') {
@@ -98,7 +105,7 @@ function pollDevice(device) {
     let sshCfg;
 
     try {
-      sshCfg = buildSSHConfig(device, settings.connectionTimeoutSecs);
+      sshCfg = buildSSHConfig(device, settings.connectionTimeoutSecs, settings.strictHostKeyChecking);
     } catch (e) {
       console.error(`[poller] device ${device.id} (${device.name}): config error: ${e.message}`);
       db.prepare('UPDATE devices SET status = ? WHERE id = ?').run('offline', device.id);
