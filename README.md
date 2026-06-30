@@ -71,15 +71,16 @@ Both start concurrently via `npm run dev` (uses `concurrently`).
 | `ENCRYPTION_KEY` | Yes | Key for AES-256-GCM password encryption |
 | `API_TOKEN` | Yes | Shared bearer token; backend rejects requests without it |
 | `NEXT_PUBLIC_API_TOKEN` | Yes | Same value as `API_TOKEN`; sent by the frontend |
-| `ALLOWED_ORIGIN` | No | Allowed Origin for the terminal WebSocket (default: `http://localhost:3000`) |
+| `ALLOWED_ORIGIN` | No | Comma-separated allowlist of Origins for CORS + the terminal WebSocket (default: `http://localhost:3000`) |
+| `SSH_KEY_DIR` | No | Directory device private keys must live in (default: `~/.ssh`) |
 | `PORT` | No | Backend port (default: `3001`) |
 
 ## SSH Authentication
 
 Devices support two auth methods:
 
-- **Key** — specify a path to a private key, or leave blank to auto-detect `~/.ssh/id_ed25519`, `~/.ssh/id_rsa`, `~/.ssh/id_ecdsa`
-- **Password** — stored encrypted; use for devices where key auth isn't available
+- **Key** — specify a path to a private key, or leave blank to auto-detect `id_ed25519`, `id_rsa`, `id_ecdsa`. Key paths are confined to `SSH_KEY_DIR` (default `~/.ssh`); paths outside it are rejected.
+- **Password** — stored encrypted (AES-256-GCM with a per-record random salt); use for devices where key auth isn't available
 
 ### Host-key verification
 
@@ -112,11 +113,13 @@ ssh-device-manager/
 │   └── _lib/             # API client, types, helpers
 └── backend/
     └── src/
-        ├── index.js       # Express server + WS upgrade + auth gates
+        ├── index.js       # Express server + WS upgrade + auth/CORS/rate-limit
         ├── auth.js        # Bearer-token middleware + WS origin/token check
+        ├── ratelimit.js   # In-memory per-IP rate limiter
         ├── poller.js      # SSH metrics polling
         ├── hostkey.js     # SSH host-key pinning (TOFU) verifier
+        ├── keypath.js     # Private-key path resolution + confinement
         ├── db.js          # SQLite + migrations
-        ├── crypto.js      # AES-256-GCM helpers
+        ├── crypto.js      # AES-256-GCM helpers (per-record salt)
         └── ws/terminal.js # WebSocket → SSH PTY bridge
 ```

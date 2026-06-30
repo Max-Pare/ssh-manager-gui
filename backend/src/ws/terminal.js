@@ -1,13 +1,12 @@
 'use strict';
 
-const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const { Client } = require('ssh2');
 const WebSocket = require('ws');
 const db = require('../db');
 const { decrypt } = require('../crypto');
 const { makeHostVerifier } = require('../hostkey');
+const { resolveKeyPath } = require('../keypath');
 
 function handleTerminal(ws, deviceId) {
   const row = db.prepare('SELECT * FROM devices WHERE id = ?').get(deviceId);
@@ -27,19 +26,6 @@ function handleTerminal(ws, deviceId) {
     closed = true;
     try { if (stream) stream.end(); } catch {}
     try { conn.end(); } catch {}
-  }
-
-  function resolveKeyPath(keyPath) {
-    if (keyPath) {
-      const p = keyPath.startsWith('~') ? path.join(os.homedir(), keyPath.slice(1)) : keyPath;
-      if (!fs.existsSync(p)) throw new Error(`Key file not found: ${p}`);
-      return p;
-    }
-    for (const name of ['id_ed25519', 'id_rsa', 'id_ecdsa']) {
-      const p = path.join(os.homedir(), '.ssh', name);
-      if (fs.existsSync(p)) return p;
-    }
-    throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
   }
 
   // Honor strictHostKeyChecking setting (string 'true'/'false' in DB).

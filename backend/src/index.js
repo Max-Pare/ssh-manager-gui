@@ -27,25 +27,45 @@ const devicesRouter = require('./routes/devices');
 const settingsRouter = require('./routes/settings');
 const { handleTerminal } = require('./ws/terminal');
 const { requireAuth, checkWsAuth } = require('./auth');
+const { rateLimit } = require('./ratelimit');
 const poller = require('./poller');
 
 const PORT = process.env.PORT || 3001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || 'http://localhost:3000';
+// Comma-separated allowlist; no wildcard, in any environment.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const app = express();
 
-// CORS
+// Security headers (hand-rolled; swap for `helmet` if you add the dep).
 app.use((req, res, next) => {
-  const origin = NODE_ENV === 'production' ? ALLOWED_ORIGIN : '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+});
+
+// CORS — echo the request Origin only if it's on the allowlist. Never '*'.
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
-app.use(express.json());
+// Rate limit all API traffic.
+app.use('/api', rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+
+app.use(express.json({ limit: '256kb' }));
 
 // Health
 app.get('/api/health', (req, res) => {
@@ -61,10 +81,14 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-// Error handler
+// Error handler — log full detail server-side, return a generic message in
+// production to avoid leaking internals (paths, stack info) to clients.
 app.use((err, req, res, _next) => {
   console.error(err);
-  res.status(500).json({ error: err.message || 'Internal server error' });
+  const message = NODE_ENV === 'production'
+    ? 'Internal server error'
+    : (err.message || 'Internal server error');
+  res.status(500).json({ error: message });
 });
 
 const server = http.createServer(app);
@@ -79,7 +103,7 @@ server.on('upgrade', (req, socket, head) => {
   if (!match) { socket.destroy(); return; }
 
   // Origin allowlist + token check (CSWSH + auth defense).
-  if (!checkWsAuth(req, ALLOWED_ORIGIN)) {
+  if (!checkWsAuth(req, ALLOWED_ORIGINS)) {
     socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
     socket.destroy();
     return;

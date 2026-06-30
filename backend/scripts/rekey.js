@@ -25,12 +25,15 @@ if (OLD_KEY === NEW_KEY) {
   process.exit(0);
 }
 
-const SALT = 'ssh-mgr-v1';
-const oldDerivedKey = crypto.scryptSync(OLD_KEY, SALT, 32);
-const newDerivedKey = crypto.scryptSync(NEW_KEY, SALT, 32);
+const LEGACY_SALT = 'ssh-mgr-v1';
 
-function decrypt(stored, key) {
-  const { iv, tag, ciphertext } = JSON.parse(stored);
+// Decrypt with the given passphrase. v2 records carry a per-record salt; older
+// records fall back to the fixed legacy salt.
+function decrypt(stored, passphrase) {
+  const obj = JSON.parse(stored);
+  const { iv, tag, ciphertext } = obj;
+  const salt = obj.salt ? Buffer.from(obj.salt, 'hex') : LEGACY_SALT;
+  const key = crypto.scryptSync(passphrase, salt, 32);
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'hex'));
   decipher.setAuthTag(Buffer.from(tag, 'hex'));
   return Buffer.concat([
@@ -39,12 +42,17 @@ function decrypt(stored, key) {
   ]).toString('utf8');
 }
 
-function encrypt(plaintext, key) {
+// Encrypt with a fresh per-record salt (v2 format).
+function encrypt(plaintext, passphrase) {
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(passphrase, salt, 32);
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const ciphertext = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
   return JSON.stringify({
+    v: 2,
+    salt: salt.toString('hex'),
     iv: iv.toString('hex'),
     tag: tag.toString('hex'),
     ciphertext: ciphertext.toString('hex'),
@@ -71,12 +79,12 @@ const rekey = db.transaction(() => {
   for (const row of rows) {
     let plaintext;
     try {
-      plaintext = decrypt(row.password, oldDerivedKey);
+      plaintext = decrypt(row.password, OLD_KEY);
     } catch (e) {
       console.error(`  device ${row.id}: decrypt failed — wrong OLD_KEY? Aborting.`);
       throw e;
     }
-    update.run(encrypt(plaintext, newDerivedKey), row.id);
+    update.run(encrypt(plaintext, NEW_KEY), row.id);
     ok++;
     console.log(`  device ${row.id}: OK`);
   }

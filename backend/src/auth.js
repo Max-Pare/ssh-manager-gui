@@ -36,13 +36,14 @@ function requireAuth(req, res, next) {
 
 // Validate a WebSocket upgrade: Origin allowlist + token (query param, since
 // browsers cannot set headers on WebSocket handshakes).
-function checkWsAuth(req, allowedOrigin) {
+function checkWsAuth(req, allowedOrigins) {
   if (!API_TOKEN) return false;
 
+  const allowList = Array.isArray(allowedOrigins) ? allowedOrigins : [allowedOrigins];
   const origin = req.headers['origin'];
   // Reject any cross-origin handshake (CSWSH defense). Missing Origin (non-browser
   // clients) is allowed since those carry no ambient browser credentials/cookies.
-  if (origin && origin !== allowedOrigin) return false;
+  if (origin && !allowList.includes(origin)) return false;
 
   let token = null;
   try {

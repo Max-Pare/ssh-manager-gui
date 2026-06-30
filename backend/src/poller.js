@@ -1,12 +1,11 @@
 'use strict';
 
-const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const { Client } = require('ssh2');
 const db = require('./db');
 const { decrypt } = require('./crypto');
 const { makeHostVerifier } = require('./hostkey');
+const { resolveKeyPath } = require('./keypath');
 
 const METRICS_CMD = [
   'echo "---CPU---"',
@@ -61,20 +60,6 @@ function getSettings() {
     else result[row.key] = Number(row.value);
   }
   return result;
-}
-
-function resolveKeyPath(keyPath) {
-  if (keyPath) {
-    const p = keyPath.startsWith('~') ? path.join(os.homedir(), keyPath.slice(1)) : keyPath;
-    if (fs.existsSync(p)) return p;
-    throw new Error(`Key file not found: ${p}`);
-  }
-  // Try common default locations
-  for (const name of ['id_ed25519', 'id_rsa', 'id_ecdsa']) {
-    const p = path.join(os.homedir(), '.ssh', name);
-    if (fs.existsSync(p)) return p;
-  }
-  throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
 }
 
 function buildSSHConfig(device, timeoutSecs, strict) {
