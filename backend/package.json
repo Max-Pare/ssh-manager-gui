@@ -1,0 +1,22 @@
+{
+  "name": "ssh-mgr-backend",
+  "version": "1.0.0",
+  "description": "SSH device manager backend",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "db:reset": "node -e \"require('fs').unlinkSync('data/ssh-mgr.db')\" && echo 'DB reset'"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "ssh-config": "^5.0.0",
+    "ssh2": "^1.16.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
