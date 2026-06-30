@@ -1,5 +1,6 @@
-## DISCLAIMER
-This application was 99% vibe coded.
+## SLOP WARNING
+This application was vibe coded with Claude (Sonnet, high reasoning).
+I wouldn't trust this to be secure or stable in any way, use at your own risk.
 
 # SSH Device Manager
 
