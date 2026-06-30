@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "3000:3000"
+      - "6592:3000"
     environment:
       - NODE_ENV=production
     depends_on:
@@ -21,7 +21,7 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - PORT=3001
       - NODE_ENV=production
-      - ALLOWED_ORIGIN=http://localhost:3000
+      - ALLOWED_ORIGIN=http://localhost:6592
     volumes:
       - ssh-mgr-data:/app/backend/data
       - ~/.ssh:/root/.ssh:ro
