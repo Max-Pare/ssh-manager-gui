@@ -8,6 +8,27 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-ssh-bg: #0d0f10;
+  --color-ssh-terminal: #0a0c0e;
+  --color-ssh-sidebar: #0b0d0e;
+  --color-ssh-header: #111315;
+  --color-ssh-toolbar: #0f1113;
+  --color-ssh-control: #131618;
+  --color-ssh-selected: #161b22;
+  --color-ssh-active: #1a1d20;
+  --color-ssh-border: #1e2124;
+  --color-ssh-border-soft: #1a1d20;
+  --color-ssh-border-blue: #2a3040;
+  --color-ssh-text: #c9d1d9;
+  --color-ssh-heading: #e2e8f0;
+  --color-ssh-soft: #7d8590;
+  --color-ssh-muted: #4a5568;
+  --color-ssh-muted-dark: #3d4147;
+  --color-ssh-dim: #2a2e33;
+  --color-ssh-green: #3fb950;
+  --color-ssh-blue: #58a6ff;
+  --color-ssh-yellow: #e3b341;
+  --color-ssh-red: #f85149;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -47,4 +68,74 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #1e2124;
   border-radius: 2px;
+}
+
+@layer components {
+  .ssh-shell {
+    @apply flex h-screen w-screen flex-col overflow-hidden bg-ssh-bg font-mono text-ssh-text;
+  }
+
+  .ssh-divider {
+    @apply bg-ssh-border;
+  }
+
+  .ssh-divider-soft {
+    @apply bg-ssh-border-soft;
+  }
+
+  .ssh-section-border {
+    @apply border-b border-ssh-border;
+  }
+
+  .ssh-section-title {
+    @apply mb-2.5 text-[8px] uppercase tracking-[1.5px] text-ssh-muted-dark;
+  }
+
+  .ssh-label {
+    @apply mb-1 block text-[9px] uppercase tracking-[1px] text-ssh-muted-dark;
+  }
+
+  .ssh-input {
+    @apply w-full rounded-[2px] border border-ssh-border bg-ssh-bg px-2.5 py-2 text-[11px] text-ssh-text placeholder:text-ssh-muted-dark;
+  }
+
+  .ssh-text-xs-muted {
+    @apply text-[9px] text-ssh-muted-dark;
+  }
+
+  .ssh-key-label {
+    @apply shrink-0 text-[9px] text-ssh-muted-dark;
+  }
+
+  .ssh-key-value {
+    @apply truncate text-right text-[9px] text-ssh-muted;
+  }
+
+  .ssh-column-label {
+    @apply shrink-0 text-[8px] uppercase tracking-[.5px] text-ssh-muted-dark;
+  }
+
+  .ssh-button {
+    @apply rounded-[2px] border border-ssh-border px-2.5 py-1 text-[10px] text-ssh-soft;
+  }
+
+  .ssh-button-muted {
+    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-2.5 py-1.5 text-[10px] text-ssh-soft;
+  }
+
+  .ssh-button-success {
+    @apply rounded-[2px] border border-ssh-green/25 bg-ssh-green/10 text-[10px] text-ssh-green;
+  }
+
+  .ssh-button-danger {
+    @apply rounded-[2px] border border-ssh-red/20 bg-ssh-red/10 text-[9px] text-ssh-red;
+  }
+
+  .ssh-count-pill {
+    @apply rounded-[2px] bg-ssh-control px-1.5 py-px text-[9px] text-ssh-muted-dark;
+  }
+
+  .ssh-chip {
+    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-1.5 py-0.5 text-[9px] text-ssh-soft;
+  }
 }

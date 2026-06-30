@@ -9,7 +9,7 @@ export function SshManagerApp() {
   const activeDevice = devices.find((device) => device.id === activeDeviceId) ?? devices[0];
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#0d0f10] font-mono text-[#c9d1d9]">
+    <div className="ssh-shell">
       <Header totalOffline={devices.length - totalOnline} totalOnline={totalOnline} />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <Sidebar activeGroup="all" />

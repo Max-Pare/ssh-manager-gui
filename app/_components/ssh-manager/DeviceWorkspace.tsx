@@ -23,41 +23,41 @@ export function DeviceWorkspace({ activeDevice, rows }: DeviceWorkspaceProps) {
 
 function Toolbar({ count }: { count: number }) {
   return (
-    <div className="flex h-10 min-h-10 shrink-0 items-center gap-2 border-b border-[#1e2124] bg-[#0f1113] px-3">
-      <label className="flex max-w-80 flex-1 items-center gap-1.5 rounded-[2px] border border-[#1e2124] bg-[#0d0f10] px-2">
-        <span className="text-[13px] leading-none text-[#3d4147]">/</span>
+    <div className="ssh-section-border flex h-10 min-h-10 shrink-0 items-center gap-2 bg-ssh-toolbar px-3">
+      <label className="flex max-w-80 flex-1 items-center gap-1.5 rounded-[2px] border border-ssh-border bg-ssh-bg px-2">
+        <span className="text-[13px] leading-none text-ssh-muted-dark">/</span>
         <input
-          className="w-full border-0 bg-transparent py-1.5 text-[10px] text-[#c9d1d9] outline-none placeholder:text-[#3d4147]"
+          className="w-full border-0 bg-transparent py-1.5 text-[10px] text-ssh-text outline-none placeholder:text-ssh-muted-dark"
           placeholder="filter hosts, IPs, tags..."
           readOnly
           type="text"
         />
       </label>
       <div className="flex-1" />
-      <span className="text-[9px] text-[#3d4147]">{count} devices</span>
+      <span className="ssh-text-xs-muted">{count} devices</span>
     </div>
   );
 }
 
 function BulkBar({ selectedCount }: { selectedCount: number }) {
   return (
-    <div className="flex h-[34px] min-h-[34px] shrink-0 items-center gap-2.5 border-b border-[#2a3040] bg-[#161b22] px-3">
-      <span className="text-[10px] text-[#e3b341]">{selectedCount} selected</span>
-      <button className="rounded-[2px] border border-[rgba(63,185,80,.2)] bg-[rgba(63,185,80,.08)] px-2 py-0.5 text-[9px] text-[#3fb950]">
+    <div className="flex h-[34px] min-h-[34px] shrink-0 items-center gap-2.5 border-b border-ssh-border-blue bg-ssh-selected px-3">
+      <span className="text-[10px] text-ssh-yellow">{selectedCount} selected</span>
+      <button className="ssh-button-success px-2 py-0.5 text-[9px]">
         connect all
       </button>
-      <button className="rounded-[2px] border border-[rgba(248,81,73,.2)] bg-[rgba(248,81,73,.06)] px-2 py-0.5 text-[9px] text-[#f85149]">
+      <button className="ssh-button-danger px-2 py-0.5">
         remove
       </button>
       <div className="flex-1" />
-      <button className="text-[9px] text-[#4a5568]">x clear</button>
+      <button className="text-[9px] text-ssh-muted">x clear</button>
     </div>
   );
 }
 
 function ColumnHeader() {
   return (
-    <div className="flex h-[26px] min-h-[26px] shrink-0 items-center border-b border-[#1e2124] bg-[#0b0d0e] px-3">
+    <div className="ssh-section-border flex h-[26px] min-h-[26px] shrink-0 items-center bg-ssh-sidebar px-3">
       <div className="w-6 min-w-6 shrink-0">
         <input
           aria-label="Select all devices"
@@ -85,7 +85,7 @@ function ColumnLabel({
   className: string;
 }) {
   return (
-    <div className={`shrink-0 text-[8px] uppercase tracking-[.5px] text-[#3d4147] ${className}`}>
+    <div className={`ssh-column-label ${className}`}>
       {children}
     </div>
   );
