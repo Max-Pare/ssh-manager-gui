@@ -1,37 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SSH Device Manager
 
-## Getting Started
+A self-hosted web GUI for managing SSH devices across environments. Monitor resource usage, open interactive terminals, and manage device inventory — all from a browser.
 
-First, run the development server:
+![Stack](https://img.shields.io/badge/Next.js-16-black) ![Backend](https://img.shields.io/badge/Node.js-Express-green) ![DB](https://img.shields.io/badge/SQLite-WAL-blue)
+
+## Features
+
+- **Device inventory** — add/edit/delete SSH devices organized by environment (prod/staging/dev) and group
+- **Live metrics** — CPU, RAM, uptime, OS polled via SSH on a configurable interval
+- **Interactive terminal** — full xterm.js PTY over WebSocket, multi-tab, persistent across navigation
+- **Bulk operations** — select multiple devices, bulk delete, CSV import/export
+- **Encrypted storage** — passwords encrypted with AES-256-GCM; key-based auth supported
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Frontend | Next.js 16, React 19, Tailwind v4, xterm.js |
+| Backend | Node.js, Express, `ws`, `ssh2` |
+| Storage | SQLite (`better-sqlite3`, WAL mode) |
+
+## Setup
+
+### Requirements
+
+- Node.js 20+
+- An `ENCRYPTION_KEY` env var (any string; used to derive the AES key for stored passwords)
+
+### Install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Max-Pare/ssh-manager-gui.git
+cd ssh-manager-gui
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Run (development)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+ENCRYPTION_KEY=your-secret-key npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Frontend: [http://localhost:3000](http://localhost:3000)  
+Backend API: [http://localhost:3001](http://localhost:3001)
 
-## Learn More
+Both start concurrently via `npm run dev` (uses `concurrently`).
 
-To learn more about Next.js, take a look at the following resources:
+### Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ENCRYPTION_KEY` | Yes | Key for AES-256-GCM password encryption |
+| `DB_PATH` | No | SQLite file path (default: `backend/data/devices.db`) |
+| `PORT` | No | Backend port (default: `3001`) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## SSH Authentication
 
-## Deploy on Vercel
+Devices support two auth methods:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Key** — specify a path to a private key, or leave blank to auto-detect `~/.ssh/id_ed25519`, `~/.ssh/id_rsa`, `~/.ssh/id_ecdsa`
+- **Password** — stored encrypted; use for devices where key auth isn't available
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# ssh-manager-gui
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+\` | Toggle terminal panel |
+
+## Project Structure
+
+```
+ssh-device-manager/
+├── app/                  # Next.js frontend
+│   ├── _components/ssh-manager/   # UI components
+│   └── _lib/             # API client, types, helpers
+└── backend/
+    └── src/
+        ├── index.js       # Express server + WS upgrade
+        ├── poller.js      # SSH metrics polling
+        ├── db.js          # SQLite + migrations
+        ├── crypto.js      # AES-256-GCM helpers
+        └── ws/terminal.js # WebSocket → SSH PTY bridge
+```

@@ -58,20 +58,35 @@ function getSettings() {
   return result;
 }
 
+function resolveKeyPath(keyPath) {
+  if (keyPath) {
+    const p = keyPath.startsWith('~') ? path.join(os.homedir(), keyPath.slice(1)) : keyPath;
+    if (fs.existsSync(p)) return p;
+    throw new Error(`Key file not found: ${p}`);
+  }
+  // Try common default locations
+  for (const name of ['id_ed25519', 'id_rsa', 'id_ecdsa']) {
+    const p = path.join(os.homedir(), '.ssh', name);
+    if (fs.existsSync(p)) return p;
+  }
+  throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
+}
+
 function buildSSHConfig(device, timeoutSecs) {
   const cfg = {
-    host: device.hostname,
+    host: device.ip || device.hostname,  // prefer IP; hostname may not resolve
     port: device.port || 22,
     username: device.user,
     readyTimeout: timeoutSecs * 1000,
   };
 
   if (device.authType === 'key') {
-    let keyPath = device.keyPath || '~/.ssh/id_rsa';
-    if (keyPath.startsWith('~')) keyPath = path.join(os.homedir(), keyPath.slice(1));
+    const keyPath = resolveKeyPath(device.keyPath);
     cfg.privateKey = fs.readFileSync(keyPath);
   } else if (device.authType === 'pass' && device.password) {
     cfg.password = decrypt(device.password);
+  } else if (device.authType === 'pass') {
+    throw new Error('Password auth but no password stored — edit device and re-enter password');
   }
 
   return cfg;

@@ -21,10 +21,10 @@
   --color-ssh-border-blue: #2a3040;
   --color-ssh-text: #c9d1d9;
   --color-ssh-heading: #e2e8f0;
-  --color-ssh-soft: #7d8590;
-  --color-ssh-muted: #4a5568;
-  --color-ssh-muted-dark: #3d4147;
-  --color-ssh-dim: #2a2e33;
+  --color-ssh-soft: #a0aabb;
+  --color-ssh-muted: #8899b0;
+  --color-ssh-muted-dark: #7a8898;
+  --color-ssh-dim: #4a5568;
   --color-ssh-green: #3fb950;
   --color-ssh-blue: #58a6ff;
   --color-ssh-yellow: #e3b341;
@@ -88,54 +88,54 @@ body {
   }
 
   .ssh-section-title {
-    @apply mb-2.5 text-[8px] uppercase tracking-[1.5px] text-ssh-muted-dark;
+    @apply mb-2.5 text-[10px] uppercase tracking-[1.5px] text-ssh-muted-dark;
   }
 
   .ssh-label {
-    @apply mb-1 block text-[9px] uppercase tracking-[1px] text-ssh-muted-dark;
+    @apply mb-1 block text-[11px] uppercase tracking-[1px] text-ssh-muted-dark;
   }
 
   .ssh-input {
-    @apply w-full rounded-[2px] border border-ssh-border bg-ssh-bg px-2.5 py-2 text-[11px] text-ssh-text placeholder:text-ssh-muted-dark;
+    @apply w-full rounded-[2px] border border-ssh-border bg-ssh-bg px-2.5 py-2 text-[13px] text-ssh-text placeholder:text-ssh-muted-dark;
   }
 
   .ssh-text-xs-muted {
-    @apply text-[9px] text-ssh-muted-dark;
+    @apply text-[11px] text-ssh-muted-dark;
   }
 
   .ssh-key-label {
-    @apply shrink-0 text-[9px] text-ssh-muted-dark;
+    @apply shrink-0 text-[11px] text-ssh-muted-dark;
   }
 
   .ssh-key-value {
-    @apply truncate text-right text-[9px] text-ssh-muted;
+    @apply truncate text-right text-[11px] text-ssh-muted;
   }
 
   .ssh-column-label {
-    @apply shrink-0 text-[8px] uppercase tracking-[.5px] text-ssh-muted-dark;
+    @apply shrink-0 text-[10px] uppercase tracking-[.5px] text-ssh-muted-dark;
   }
 
   .ssh-button {
-    @apply rounded-[2px] border border-ssh-border px-2.5 py-1 text-[10px] text-ssh-soft;
+    @apply rounded-[2px] border border-ssh-border px-2.5 py-1 text-[12px] text-ssh-soft;
   }
 
   .ssh-button-muted {
-    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-2.5 py-1.5 text-[10px] text-ssh-soft;
+    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-2.5 py-1.5 text-[12px] text-ssh-soft;
   }
 
   .ssh-button-success {
-    @apply rounded-[2px] border border-ssh-green/25 bg-ssh-green/10 text-[10px] text-ssh-green;
+    @apply rounded-[2px] border border-ssh-green/25 bg-ssh-green/10 text-[12px] text-ssh-green;
   }
 
   .ssh-button-danger {
-    @apply rounded-[2px] border border-ssh-red/20 bg-ssh-red/10 text-[9px] text-ssh-red;
+    @apply rounded-[2px] border border-ssh-red/20 bg-ssh-red/10 text-[11px] text-ssh-red;
   }
 
   .ssh-count-pill {
-    @apply rounded-[2px] bg-ssh-control px-1.5 py-px text-[9px] text-ssh-muted-dark;
+    @apply rounded-[2px] bg-ssh-control px-1.5 py-px text-[11px] text-ssh-muted-dark;
   }
 
   .ssh-chip {
-    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-1.5 py-0.5 text-[9px] text-ssh-soft;
+    @apply rounded-[2px] border border-ssh-border bg-ssh-control px-1.5 py-0.5 text-[11px] text-ssh-soft;
   }
 }

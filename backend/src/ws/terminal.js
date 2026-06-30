@@ -17,12 +17,6 @@ function handleTerminal(ws, deviceId) {
     return;
   }
 
-  if (row.status === 'offline') {
-    ws.send(JSON.stringify({ type: 'error', message: 'Device is offline' }));
-    ws.close();
-    return;
-  }
-
   const conn = new Client();
   let stream = null;
   let closed = false;
@@ -34,21 +28,32 @@ function handleTerminal(ws, deviceId) {
     try { conn.end(); } catch {}
   }
 
+  function resolveKeyPath(keyPath) {
+    if (keyPath) {
+      const p = keyPath.startsWith('~') ? path.join(os.homedir(), keyPath.slice(1)) : keyPath;
+      if (!fs.existsSync(p)) throw new Error(`Key file not found: ${p}`);
+      return p;
+    }
+    for (const name of ['id_ed25519', 'id_rsa', 'id_ecdsa']) {
+      const p = path.join(os.homedir(), '.ssh', name);
+      if (fs.existsSync(p)) return p;
+    }
+    throw new Error('No SSH key found. Set keyPath on the device or place a key at ~/.ssh/id_ed25519 or ~/.ssh/id_rsa');
+  }
+
   // Build SSH connection config
   const sshCfg = {
-    host: row.hostname,
+    host: row.ip || row.hostname,  // prefer IP; hostname may not resolve
     port: row.port || 22,
     username: row.user,
     readyTimeout: 30000,
   };
 
   if (row.authType === 'key') {
-    let keyPath = row.keyPath || '~/.ssh/id_rsa';
-    if (keyPath.startsWith('~')) keyPath = path.join(os.homedir(), keyPath.slice(1));
     try {
-      sshCfg.privateKey = fs.readFileSync(keyPath);
+      sshCfg.privateKey = fs.readFileSync(resolveKeyPath(row.keyPath));
     } catch (e) {
-      ws.send(JSON.stringify({ type: 'error', message: `Cannot read key file: ${e.message}` }));
+      ws.send(JSON.stringify({ type: 'error', message: e.message }));
       ws.close();
       return;
     }
@@ -60,6 +65,10 @@ function handleTerminal(ws, deviceId) {
       ws.close();
       return;
     }
+  } else if (row.authType === 'pass') {
+    ws.send(JSON.stringify({ type: 'error', message: 'Password auth but no password stored — edit device and re-enter password' }));
+    ws.close();
+    return;
   }
 
   conn.on('ready', () => {
@@ -102,11 +111,13 @@ function handleTerminal(ws, deviceId) {
     const text = msg.toString();
     try {
       const ctrl = JSON.parse(text);
-      if (ctrl.type === 'resize' && typeof ctrl.cols === 'number' && typeof ctrl.rows === 'number') {
+      if (ctrl && typeof ctrl === 'object' && ctrl.type === 'resize' &&
+          typeof ctrl.cols === 'number' && typeof ctrl.rows === 'number') {
         stream.setWindow(ctrl.rows, ctrl.cols, 0, 0);
+      } else {
+        stream.write(text);
       }
     } catch {
-      // Raw terminal input — forward to SSH stdin
       stream.write(text);
     }
   });
