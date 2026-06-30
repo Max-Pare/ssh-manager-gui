@@ -1,3 +1,6 @@
+## DISCLAIMER
+This application was 99% vibe coded.
+
 # SSH Device Manager
 
 A self-hosted web GUI for managing SSH devices across environments. Monitor resource usage, open interactive terminals, and manage device inventory — all from a browser.
