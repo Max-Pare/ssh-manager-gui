@@ -2,11 +2,17 @@
   "name": "ssh-device-manager",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "backend"
+  ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n frontend,backend -c cyan,yellow \"next dev\" \"nodemon backend/src/index.js\"",
+    "dev:frontend": "next dev",
+    "dev:backend": "nodemon backend/src/index.js",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:reset": "node -e \"require('fs').unlinkSync('backend/data/ssh-mgr.db')\" && echo 'DB reset'"
   },
   "dependencies": {
     "next": "16.2.9",
@@ -18,6 +24,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
