@@ -6,18 +6,42 @@ export const API_URL =
 
 export const WS_URL = API_URL.replace(/^http/, 'ws');
 
-const API_TOKEN =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_API_TOKEN) || '';
+// The API token is entered by the operator at runtime and kept in localStorage.
+// It is deliberately NOT baked into the JS bundle via NEXT_PUBLIC_* — anything
+// in the bundle is readable by anyone who can load the page.
+const TOKEN_KEY = 'ssh-mgr:token';
 
-function authHeaders(): Record<string, string> {
-  return API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {};
+export function getToken(): string {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(TOKEN_KEY) ?? '';
 }
 
-// Terminal WebSocket URL. Browsers can't set headers on the WS handshake, so the
-// token rides in the query string and is validated server-side on upgrade.
-export function terminalWsUrl(deviceId: number): string {
-  const t = API_TOKEN ? `?token=${encodeURIComponent(API_TOKEN)}` : '';
-  return `${WS_URL}/ws/terminal/${deviceId}${t}`;
+export function setToken(token: string) {
+  window.localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken() {
+  window.localStorage.removeItem(TOKEN_KEY);
+}
+
+// Validate a token against the backend without storing it.
+export async function checkAuth(token: string): Promise<boolean> {
+  const res = await fetch(`${API_URL}/api/auth/check`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.ok;
+}
+
+function authHeaders(): Record<string, string> {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
+// Terminal WebSocket URL. Browsers can't set headers on the WS handshake, so a
+// single-use short-lived ticket (never the API token) rides in the query string.
+export async function terminalWsUrl(deviceId: number): Promise<string> {
+  const { ticket } = await apiFetch<{ ticket: string }>('/api/auth/ws-ticket', { method: 'POST' });
+  return `${WS_URL}/ws/terminal/${deviceId}?ticket=${encodeURIComponent(ticket)}`;
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -25,6 +49,10 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options?.headers },
   });
+  if (res.status === 401 && typeof window !== 'undefined') {
+    // Token revoked or wrong — let the auth gate drop back to the login screen.
+    window.dispatchEvent(new Event('ssh-mgr:unauthorized'));
+  }
   if (!res.ok) {
     let msg = res.statusText;
     try { msg = (await res.json()).error ?? msg; } catch {}

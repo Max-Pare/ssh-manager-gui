@@ -1,0 +1,30 @@
+# TLS reverse proxy for ssh-device-manager.
+#
+# Without TLS, the API token and any SSH passwords you enter travel the
+# network in cleartext. Run Caddy (https://caddyserver.com) in front of both
+# ports and firewall 3000/3001 so they are only reachable via the proxy
+# (e.g. bind them to 127.0.0.1, or block them with ufw/nftables).
+#
+# Setup:
+#   1. cp Caddyfile.example Caddyfile   (edit the hostname)
+#   2. Set in .env:
+#        NEXT_PUBLIC_API_URL=https://your-host
+#        ALLOWED_ORIGIN=https://your-host
+#      then rebuild (./run.sh) — NEXT_PUBLIC_* is baked at build time.
+#   3. caddy run   (or install as a service: caddy start / systemd unit)
+#
+# For a LAN/Tailscale host with no public DNS, `tls internal` makes Caddy
+# issue a self-signed cert from its local CA. Trust it on your clients, or
+# use your Tailscale MagicDNS name with real certs via `tailscale cert`.
+
+your-host.example.com {
+	# LAN-only? uncomment to use Caddy's internal CA instead of Let's Encrypt:
+	# tls internal
+
+	# Backend: REST API + terminal WebSocket (Caddy proxies WS automatically)
+	reverse_proxy /api/* localhost:3001
+	reverse_proxy /ws/* localhost:3001
+
+	# Frontend: everything else goes to the Next.js standalone server
+	reverse_proxy localhost:3000
+}

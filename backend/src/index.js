@@ -26,7 +26,7 @@ const WebSocket = require('ws');
 const devicesRouter = require('./routes/devices');
 const settingsRouter = require('./routes/settings');
 const { handleTerminal } = require('./ws/terminal');
-const { requireAuth, checkWsAuth } = require('./auth');
+const { requireAuth, checkWsAuth, issueTicket } = require('./auth');
 const { rateLimit } = require('./ratelimit');
 const poller = require('./poller');
 
@@ -71,6 +71,10 @@ app.use(express.json({ limit: '256kb' }));
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, version: '1.0.0' });
 });
+
+// Auth: token validation for the login gate + one-time WebSocket tickets
+app.get('/api/auth/check', requireAuth, (req, res) => res.json({ ok: true }));
+app.post('/api/auth/ws-ticket', requireAuth, (req, res) => res.json({ ticket: issueTicket() }));
 
 // Routes (all require a valid API token)
 app.use('/api/devices', requireAuth, devicesRouter);

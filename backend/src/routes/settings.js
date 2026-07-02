@@ -29,6 +29,33 @@ function serializeValue(value) {
   return String(value);
 }
 
+// Bounds for numeric settings. Without a floor, pollIntervalSecs=0 turns the
+// poller into a tight loop hammering every device with SSH connections.
+const NUMERIC_LIMITS = {
+  connectionTimeoutSecs: { min: 5, max: 300 },
+  serverAliveIntervalSecs: { min: 0, max: 3600 },
+  pollIntervalSecs: { min: 5, max: 86400 },
+};
+
+// Returns the validated/clamped value, or undefined if the value is invalid.
+function validateValue(key, value) {
+  const def = DEFAULTS[key];
+  if (typeof def === 'boolean') {
+    return typeof value === 'boolean' ? value : undefined;
+  }
+  if (typeof def === 'number') {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return undefined;
+    const { min, max } = NUMERIC_LIMITS[key];
+    return Math.min(max, Math.max(min, Math.round(n)));
+  }
+  if (Array.isArray(def)) {
+    if (!Array.isArray(value) || !value.every((v) => typeof v === 'string')) return undefined;
+    return value;
+  }
+  return undefined;
+}
+
 function getAllSettings() {
   const rows = db.prepare('SELECT key, value FROM settings').all();
   const result = { ...DEFAULTS };
@@ -52,7 +79,12 @@ router.put('/', (req, res) => {
 
   const pairs = [];
   for (const [key, value] of Object.entries(req.body)) {
-    if (key in DEFAULTS) pairs.push([key, serializeValue(value)]);
+    if (!(key in DEFAULTS)) continue;
+    const validated = validateValue(key, value);
+    if (validated === undefined) {
+      return res.status(400).json({ error: `Invalid value for ${key}` });
+    }
+    pairs.push([key, serializeValue(validated)]);
   }
 
   upsertMany(pairs);

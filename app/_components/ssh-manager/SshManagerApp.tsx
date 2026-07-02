@@ -90,9 +90,15 @@ export function SshManagerApp() {
     setSelectedIds(checked ? new Set(filteredDevices.map((d) => d.id)) : new Set());
 
   // ── Terminal sessions ──────────────────────────────────────────────────────
-  const openTerminal = (device: Device) => {
+  const openTerminal = async (device: Device) => {
     const sessionId = `${device.id}-${Date.now()}`;
-    const ws = new WebSocket(terminalWsUrl(device.id));
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(await terminalWsUrl(device.id));
+    } catch (err) {
+      console.error('Failed to open terminal', err);
+      return;
+    }
 
     setSessions((prev) => [
       ...prev,
