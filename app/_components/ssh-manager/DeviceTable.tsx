@@ -84,7 +84,7 @@ function DeviceRow({
           {device.env}
         </span>
       </div>
-      <div className="w-[88px] min-w-[88px] shrink-0 text-[12px] text-ssh-soft">{device.ip}</div>
+      <div className="w-[124px] min-w-[124px] shrink-0 truncate whitespace-nowrap text-[12px] text-ssh-soft">{device.ip}</div>
       <ResourceCell color={cpuColor} label={online ? `${device.cpu}%` : '-'} value={online ? device.cpu : 0} />
       <ResourceCell color={ramColor} label={online ? `${device.ram}%` : '-'} value={online ? device.ram : 0} />
       <div className="flex w-14 min-w-14 shrink-0 justify-end">
