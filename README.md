@@ -1,6 +1,7 @@
 ## SLOP WARNING
-This application was vibe coded with Claude (Sonnet, high reasoning).
+This application was vibe coded with Claude (Sonnet, high reasoning, Fable 5 high reasoning for security scans).
 I wouldn't trust this to be secure or stable in any way, use at your own risk.
+I recommend firewalling this application very tightly and not exposing it to the internet without a tunnel like Tailscale or Wireguard.
 
 # SSH Device Manager
 
