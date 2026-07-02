@@ -154,7 +154,7 @@ function ColumnHeader({
       </div>
       <div className="w-3 min-w-3 shrink-0" />
       <ColumnLabel className="flex-1 pl-1">host</ColumnLabel>
-      <ColumnLabel className="w-[112px] min-w-[112px]">ip address</ColumnLabel>
+      <ColumnLabel className="w-[124px] min-w-[124px]">ip address</ColumnLabel>
       <ColumnLabel className="w-[76px] min-w-[76px]">cpu</ColumnLabel>
       <ColumnLabel className="w-[76px] min-w-[76px]">ram</ColumnLabel>
       <div className="w-14 min-w-14 shrink-0" />
