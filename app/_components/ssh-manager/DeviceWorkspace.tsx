@@ -55,7 +55,7 @@ export function DeviceWorkspace({
           onClear={onClearSelection}
         />
       )}
-      <ColumnHeader allSelected={allSelected} someSelected={someSelected} onSelectAll={onSelectAll} />
+      <ColumnHeader allSelected={allSelected} someSelected={someSelected} detailOpen={!!activeDevice} onSelectAll={onSelectAll} />
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <DeviceTable
           rows={devices}
@@ -132,14 +132,16 @@ function BulkBar({
 function ColumnHeader({
   allSelected,
   someSelected,
+  detailOpen,
   onSelectAll,
 }: {
   allSelected: boolean;
   someSelected: boolean;
+  detailOpen: boolean;
   onSelectAll: (checked: boolean) => void;
 }) {
   return (
-    <div className="ssh-section-border flex h-[26px] min-h-[26px] shrink-0 items-center bg-ssh-sidebar px-3">
+    <div className={`ssh-section-border flex h-[26px] min-h-[26px] shrink-0 items-center bg-ssh-sidebar pl-3 ${detailOpen ? 'pr-[300px]' : 'pr-3'}`}>
       <div className="w-6 min-w-6 shrink-0">
         <input
           aria-label="Select all devices"

@@ -14,7 +14,7 @@ type Props = {
 export function DeviceTable({ rows, activeDeviceId, selectedIds, onSelectDevice, onToggleSelect, onConnect }: Props) {
   return (
     <section className="relative h-full overflow-hidden">
-      <div className="absolute inset-0 overflow-y-auto overflow-x-hidden pr-[288px]">
+      <div className={`absolute inset-0 overflow-y-auto overflow-x-hidden ${activeDeviceId !== null ? 'pr-[288px]' : ''}`}>
         {rows.map((device) => (
           <DeviceRow
             key={device.id}
