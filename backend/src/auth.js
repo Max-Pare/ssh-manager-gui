@@ -34,8 +34,37 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Validate a WebSocket upgrade: Origin allowlist + token (query param, since
-// browsers cannot set headers on WebSocket handshakes).
+// One-time, short-lived WebSocket tickets. Browsers cannot set headers on the
+// WS handshake, and putting the long-lived API token in the URL leaks it into
+// proxy/access logs. Clients POST /api/auth/ws-ticket (Bearer-authed) to get a
+// single-use ticket, then connect with ?ticket=<...>.
+const TICKET_TTL_MS = 30 * 1000;
+const tickets = new Map(); // ticket -> expiresAt
+
+function issueTicket() {
+  const ticket = crypto.randomBytes(32).toString('hex');
+  tickets.set(ticket, Date.now() + TICKET_TTL_MS);
+  return ticket;
+}
+
+function redeemTicket(ticket) {
+  if (typeof ticket !== 'string') return false;
+  const expiresAt = tickets.get(ticket);
+  if (expiresAt === undefined) return false;
+  tickets.delete(ticket); // single use, even if expired
+  return expiresAt > Date.now();
+}
+
+// Sweep expired tickets so abandoned ones don't accumulate.
+const sweep = setInterval(() => {
+  const now = Date.now();
+  for (const [t, exp] of tickets) {
+    if (exp <= now) tickets.delete(t);
+  }
+}, 60 * 1000);
+if (sweep.unref) sweep.unref();
+
+// Validate a WebSocket upgrade: Origin allowlist + one-time ticket.
 function checkWsAuth(req, allowedOrigins) {
   if (!API_TOKEN) return false;
 
@@ -45,14 +74,14 @@ function checkWsAuth(req, allowedOrigins) {
   // clients) is allowed since those carry no ambient browser credentials/cookies.
   if (origin && !allowList.includes(origin)) return false;
 
-  let token = null;
+  let ticket = null;
   try {
     const url = new URL(req.url, 'http://localhost');
-    token = url.searchParams.get('token');
+    ticket = url.searchParams.get('ticket');
   } catch {
     return false;
   }
-  return !!token && safeEqual(token, API_TOKEN);
+  return redeemTicket(ticket);
 }
 
-module.exports = { requireAuth, checkWsAuth, API_TOKEN };
+module.exports = { requireAuth, checkWsAuth, issueTicket, API_TOKEN };

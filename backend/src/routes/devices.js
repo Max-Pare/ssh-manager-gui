@@ -169,9 +169,12 @@ router.put('/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM devices WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Device not found' });
 
+  // hostKey is deliberately NOT updatable here — overwriting the pinned
+  // fingerprint would silently defeat MITM detection. Use DELETE /:id/hostkey
+  // to re-arm trust-on-first-use after a legitimate host key rotation.
   const ALLOWED = ['name', 'hostname', 'ip', 'port', 'user', 'authType', 'keyPath',
                    'password', 'env', 'group', 'tags', 'os', 'cpu', 'ram', 'uptime',
-                   'status', 'lastSeen', 'hostKey'];
+                   'status', 'lastSeen'];
 
   const cols = {};
   for (const field of ALLOWED) {
@@ -219,6 +222,15 @@ router.delete('/', (req, res) => {
   const ph = ids.map(() => '?').join(', ');
   db.prepare(`DELETE FROM devices WHERE id IN (${ph})`).run(...ids);
   res.json({ ok: true, deleted: ids.length });
+});
+
+// DELETE /api/devices/:id/hostkey — clear the pinned host key fingerprint,
+// re-arming trust-on-first-use (use after a legitimate host key rotation).
+router.delete('/:id/hostkey', (req, res) => {
+  const row = db.prepare('SELECT id FROM devices WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Device not found' });
+  db.prepare('UPDATE devices SET hostKey = NULL WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
 });
 
 // POST /api/devices/:id/poll
